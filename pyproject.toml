@@ -22,6 +22,16 @@ pandas = "*"
 ipykernel = "^6.29.2"
 gym = {version = "0.24.1", extras = ["accept-rom-license", "atari"]}
 opencv-python = "^4.9.0.80"
+black = "^24.2.0"
+isort = "^5.13.2"
+flake8 = "^7.0.0"
+
+[tool.isort]
+profile = "black"
+line_length = 79
+
+[tool.black]
+line-length = 79
 
 [build-system]
 requires = ["poetry-core"]
