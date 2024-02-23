@@ -166,3 +166,5 @@ poetry.lock
 pyproject.toml
 
 logs/
+
+.env

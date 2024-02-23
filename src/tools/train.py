@@ -1,23 +1,31 @@
+import os
+
+import click
 import gym
 import numpy as np
 import pandas as pd
 import torch
 from torch import nn, optim
+
+from src.models.DQN.network import CNNQNetwork
+from src.models.DQN.update import update
+from src.models.DQN.util import PrioritizedReplayBuffer
+from src.pruning.slth.edgepopup import modify_module_for_slth
 from src.utils.date import get_current_datetime_for_path
 from src.utils.logger import setup_logger
 from src.utils.seed import torch_fix_seed
-import click
-import os
 
-from src.models.DQN.network import CNNQNetwork
-from src.models.DQN.util import PrioritizedReplayBuffer
-from src.pruning.slth.edgepopup import modify_module_for_slth
 
 @click.command()
 @click.option("--eval_steps", default=1_000, help="Number of eval steps.")
 @click.option("--n_episodes", default=300, help="Number of steps.")
 @click.option("--seed", default=0, help="seed")
-@click.option("--is_prune", type=click.BOOL, default=False, help="whether net will be pruned")
+@click.option(
+    "--is_prune",
+    type=click.BOOL,
+    default=True,
+    help="whether net will be pruned",
+)
 @click.option("--remain_rate", default=0.3, help="whether net will be pruned")
 @click.option("--env_id", default="PongNoFrameskip-v4", help="Environment ID.")
 def main(eval_steps, n_episodes, seed, is_prune, remain_rate, env_id):
@@ -30,9 +38,7 @@ def main(eval_steps, n_episodes, seed, is_prune, remain_rate, env_id):
     else:
         flg = "is_not_prune_seed_"
 
-    save_dir = "./logs/{}/{}/{}".format(
-        current_date, env_id, flg + str(seed)
-    )
+    save_dir = "./logs/{}/{}/{}".format(current_date, env_id, flg + str(seed))
     os.makedirs(save_dir, exist_ok=True)
     logger = setup_logger(save_dir)
     logger.info(save_dir)
@@ -62,13 +68,12 @@ def main(eval_steps, n_episodes, seed, is_prune, remain_rate, env_id):
     initial_buffer_size = 10000  # 学習を開始する最低限の経験の数
     replay_buffer = PrioritizedReplayBuffer(buffer_size)
 
-
     """
         ネットワークの宣言
     """
-    net = CNNQNetwork(env.observation_space.shape, n_action=env.action_space.n).to(
-        device
-    )
+    net = CNNQNetwork(
+        env.observation_space.shape, n_action=env.action_space.n
+    ).to(device)
     target_net = CNNQNetwork(
         env.observation_space.shape, n_action=env.action_space.n
     ).to(device)
@@ -88,7 +93,6 @@ def main(eval_steps, n_episodes, seed, is_prune, remain_rate, env_id):
         reduction="none"
     )  # ロスはSmoothL1loss（別名Huber loss）
 
-
     """
         Prioritized Experience Replayのためのパラメータβ
     """
@@ -99,7 +103,6 @@ def main(eval_steps, n_episodes, seed, is_prune, remain_rate, env_id):
     beta_func = lambda step: min(
         beta_end, beta_begin + (beta_end - beta_begin) * (step / beta_decay)
     )
-
 
     """
         探索のためのパラメータε
@@ -113,60 +116,12 @@ def main(eval_steps, n_episodes, seed, is_prune, remain_rate, env_id):
         epsilon_begin - (epsilon_begin - epsilon_end) * (step / epsilon_decay),
     )
 
-
     """
         その他のハイパーパラメータ
     """
     gamma = 0.99  # 　割引率
     batch_size = 32
     n_episodes = n_episodes  # 学習を行うエピソード数
-
-
-    def update(batch_size, beta):
-        obs, action, reward, next_obs, done, indices, weights = (
-            replay_buffer.sample(batch_size, beta)
-        )
-        obs, action, reward, next_obs, done, weights = (
-            obs.float().to(device),
-            action.to(device),
-            reward.to(device),
-            next_obs.float().to(device),
-            done.to(device),
-            weights.to(device),
-        )
-
-        # 　ニューラルネットワークによるQ関数の出力から, .gatherで実際に選択した行動に対応する価値を集めてきます.
-        q_values = net(obs).gather(1, action.unsqueeze(1)).squeeze(1)
-
-        # 目標値の計算なので勾配を追跡しない
-        with torch.no_grad():
-            # Double DQN.
-            # ① 現在のQ関数でgreedyに行動を選択し,
-            greedy_action_next = torch.argmax(net(next_obs), dim=1)
-            # ②　対応する価値はターゲットネットワークのものを参照します.
-            q_values_next = (
-                target_net(next_obs)
-                .gather(1, greedy_action_next.unsqueeze(1))
-                .squeeze(1)
-            )
-
-        # ベルマン方程式に基づき, 更新先の価値を計算します.
-        # (1 - done)をかけているのは, ゲームが終わった後の価値は0とみなすためです.
-        target_q_values = reward + gamma * q_values_next * (1 - done)
-
-        # Prioritized Experience Replayのために, ロスに重み付けを行なって更新します.
-        optimizer.zero_grad()
-        loss = (weights * loss_func(q_values, target_q_values)).mean()
-        loss.backward()
-        optimizer.step()
-
-        # 　TD誤差に基づいて, サンプルされた経験の優先度を更新します.
-        replay_buffer.update_priorities(
-            indices, (target_q_values - q_values).abs().detach().cpu().numpy()
-        )
-
-        return loss.item()
-
 
     step = 0
     rewards = []
@@ -197,7 +152,17 @@ def main(eval_steps, n_episodes, seed, is_prune, remain_rate, env_id):
 
             # ネットワークを更新
             if len(replay_buffer) > initial_buffer_size:
-                update(batch_size, beta_func(step))
+                update(
+                    net,
+                    target_net,
+                    optimizer,
+                    loss_func,
+                    replay_buffer,
+                    device,
+                    batch_size,
+                    beta_func(step),
+                    gamma,
+                )
 
             # ターゲットネットワークを定期的に同期させる
             if (step + 1) % target_update_interval == 0:
@@ -219,6 +184,8 @@ def main(eval_steps, n_episodes, seed, is_prune, remain_rate, env_id):
         "model_state": net.state_dict(),
     }
 
-    torch.save(save_dict, os.path.join(save_dir, 'save_dict.pkl'))
+    torch.save(save_dict, os.path.join(save_dir, "save_dict.pkl"))
+
+
 if __name__ == "__main__":
     main()
