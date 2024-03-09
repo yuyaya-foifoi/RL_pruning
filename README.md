@@ -4,21 +4,44 @@
 This repository contains a model that prunes Deep Q-Network (DQN) models by Edge pop up algorithm. The goal of this approach is to reduce the computational complexity of DQN models while maintaining or even enhancing their performance in playing Atari games.
 
 ## Work In Progress (WIP)
-Please note that this repository is a work in progress. Tuning of hyperparameters is needed to optimize the model's performance. As evident from the performance chart in ![Performance](images/output2.png), there is a noticeable difference in rewards between the pruned and non-pruned models.
+Please note that this repository is a work in progress. Tuning of hyperparameters is needed to optimize the model's performance. As evident from the performance chart in Performance section below, there is a noticeable difference in rewards between the pruned and non-pruned models.
 
 ## Performance
 1. Pruning Effectiveness: The performance of the pruned model is relatively lower compared to the non-pruned model, as shown in the following chart. The chart illustrates the reward over episodes, highlighting the impact of pruning on the model's ability to play the game. 
 
-   ![Performance](images/output2.png)
+<table>
+  <tr>
+    <!-- Pruned Model vs  Non-Pruned Model-->
+    <td>
+      <figure>
+        <img src="images/output2.png" alt="Performance" style="width:75%">
+        <figcaption>Fig.1 - Pruned Model Performance</figcaption>
+      </figure>
+    </td>
+  </tr>
+</table>
 
-2. Pruning Processing Time: When pruning is applied, it takes relatively longer for the model to achieve a certain level of performance. This is depicted in the two charts below, where the first shows the progress of the pruned model and the second displays the progress of the non-pruned model over the same number of episodes.
+3. Pruning Processing Time: When pruning is applied, it takes relatively longer for the model to achieve a certain level of performance. This is depicted in the two charts below, where the first shows the progress of the pruned model and the second displays the progress of the non-pruned model over the same number of episodes.
 
 <table>
   <tr>
-    <td>![Performance Chart - Pruned](images/is_prune_900.png)</td>
-    <td>![Performance Chart - Non-Pruned](images/no_prune_900.png)</td>
+    <!-- Pruned Model Chart -->
+    <td>
+      <figure>
+        <img src="images/is_prune_900.png" alt="Performance Chart - Pruned" style="width:100%">
+        <figcaption>Fig.2 - Pruned Model Performance</figcaption>
+      </figure>
+    </td>
+    <!-- Non-Pruned Model Chart -->
+    <td>
+      <figure>
+        <img src="images/no_prune_900.png" alt="Performance Chart - Non-Pruned" style="width:100%">
+        <figcaption>Fig.3 - Non-Pruned Model Performance</figcaption>
+      </figure>
+    </td>
   </tr>
 </table>
+
 
 ## Execution Instructions
 To run the model training with pruning, follow these steps:
