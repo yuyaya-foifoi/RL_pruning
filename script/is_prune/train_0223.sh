@@ -1,7 +1,7 @@
 #!/bin/bash
 
 n_episodes=300
-max_seed=2
+max_seed=5
 remain_rate=0.3
 env_id="PongNoFrameskip-v4"
 

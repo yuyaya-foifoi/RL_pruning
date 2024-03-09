@@ -31,17 +31,19 @@ def main(n_episodes, max_seed, remain_rate, env_id):
     current_date = get_current_datetime_for_path()
 
     for seed in np.arange(max_seed):
-        save_dir = "./logs/{}/{}/{}/{}/{}".format(
+        save_dir = "./logs/{}/{}/{}/{}/{}/{}".format(
             env_id,
             "is_prune",
-            current_date,
+            "n_episodes_" + str(n_episodes),
             "remain_rate_" + str(int(remain_rate * 100)),
             "seed_" + str(seed),
+            current_date,
         )
         os.makedirs(save_dir, exist_ok=True)
         logger = setup_logger(save_dir)
         logger.info("save_dir : {}".format(save_dir))
         logger.info("env is {}".format(env_id))
+        logger.info("n_episodes is {}".format(str(n_episodes)))
         logger.info(
             "the model will be pruned and remain rate is {}".format(
                 str(remain_rate * 100) + "%"

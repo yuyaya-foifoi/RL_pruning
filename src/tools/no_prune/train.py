@@ -29,12 +29,13 @@ def main(n_episodes, max_seed, env_id):
     current_date = get_current_datetime_for_path()
 
     for seed in np.arange(max_seed):
-        save_dir = "./logs/{}/{}/{}/{}".format(
-            env_id, "no_prune", current_date, "seed_" + str(seed)
+        save_dir = "./logs/{}/{}/{}/{}/{}".format(
+            env_id, "no_prune", "n_episodes_" + str(n_episodes) , "seed_" + str(seed), current_date
         )
         os.makedirs(save_dir, exist_ok=True)
         logger = setup_logger(save_dir)
         logger.info("save_dir : {}".format(save_dir))
+        logger.info("n_episodes is {}".format(str(n_episodes)))
         logger.info("env is {}".format(env_id))
         logger.info("the model will NOT be pruned")
 
