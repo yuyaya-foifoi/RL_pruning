@@ -14,7 +14,7 @@ Please note that this repository is a work in progress. Tuning of hyperparameter
     <!-- Pruned Model vs  Non-Pruned Model-->
     <td>
       <figure>
-        <img src="images/output2.png" alt="Performance" style="width:75%">
+        <img src="images/output2.png" alt="Performance" style="width:55%">
         <figcaption>Fig.1 - Pruned Model vs  Non-Pruned Model Performance</figcaption>
       </figure>
     </td>
